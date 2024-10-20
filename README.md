@@ -45,7 +45,8 @@ deploy_job:
     - ssh user@production-server 'cd /app && git pull && npm install && pm2 restart app'
   only:
     - main
-    ```
+```
+
 Определим ряд ~~не~~ очевидных проблем.
 
 1. Повторяющаяся установка зависимостей `npm install`.
@@ -57,6 +58,7 @@ deploy_job:
 ## Good practices
 
 Что ж, а теперь самое время исправить наши косяки:
+
 ```
 stages:
   - build
@@ -105,8 +107,8 @@ deploy_production_job:
     - ssh user@production-server 'cd /app && git pull && npm ci && pm2 restart app'
   only:
     - manual
-
 ```
+
 На что же теперь стоит обратить внимание:
 1. Изменили `npm install` на `npm ci`. Это гораздо быстрее и предназначено для CI. Также внедрили кэширование, теперь повторные запуски куда быстрее.
 2. Добавили стадию *deploy_staging*, что позволяет нам развернуть приложение в тестовое окружение перед prod.
