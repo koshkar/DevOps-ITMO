@@ -1,0 +1,33 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  DEPLOY_ENV: production
+
+build_job:
+  stage: build
+  script:
+    - echo "Building the app..."
+    - npm install
+    - npm run build
+  only:
+    - main
+
+test_job:
+  stage: test
+  script:
+    - echo "Running tests..."
+    - npm install
+    - npm test
+  only:
+    - main
+
+deploy_job:
+  stage: deploy
+  script:
+    - echo "Deploying to production..."
+    - ssh user@production-server 'cd /app && git pull && npm install && pm2 restart app'
+  only:
+    - main

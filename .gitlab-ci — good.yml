@@ -1,0 +1,47 @@
+stages:
+  - build
+  - test
+  - deploy_staging
+  - deploy_production
+
+cache:
+  paths:
+    - node_modules/
+
+variables:
+  STAGING_ENV: staging
+  PRODUCTION_ENV: production
+
+build_job:
+  stage: build
+  script:
+    - echo "Building the app..."
+    - npm ci
+    - npm run build
+  only:
+    - main
+
+test_job:
+  stage: test
+  script:
+    - echo "Running tests..."
+    - npm ci
+    - npm test
+  only:
+    - main
+
+deploy_staging_job:
+  stage: deploy_staging
+  script:
+    - echo "Deploying to staging..."
+    - ssh user@staging-server 'cd /app && git pull && npm ci && pm2 restart app'
+  only:
+    - main
+
+deploy_production_job:
+  stage: deploy_production
+  script:
+    - echo "Deploying to production..."
+    - ssh user@production-server 'cd /app && git pull && npm ci && pm2 restart app'
+  only:
+    - manual
