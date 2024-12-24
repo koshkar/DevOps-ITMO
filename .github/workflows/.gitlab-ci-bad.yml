@@ -1,35 +1,27 @@
-name: CI Pipeline
+name: Java CI
+
+on:
+  - push
+  - pull_request
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build the app
-        run: npm run build
-
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run tests
-        run: npm test
-
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Deploy to Production
-        run: ssh user@production-server 'cd /app && git pull && npm install && pm2 restart app'
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - uses: gradle/gradle-build-action@v3
+        with:
+          gradle-version: 8.7
+      - run: |
+          cd app 
+          chmod +x gradlew
+          ./gradlew test
+      - run: |
+          cd app
+          chmod +x gradlew
+          ./gradlew build
