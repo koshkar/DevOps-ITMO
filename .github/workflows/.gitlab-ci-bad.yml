@@ -1,33 +1,35 @@
-stages:
-  - build
-  - test
-  - deploy
+name: CI Pipeline
 
-variables:
-  DEPLOY_ENV: production
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-build_job:
-  stage: build
-  script:
-    - echo "Building the app..."
-    - npm install
-    - npm run build
-  only:
-    - main
+      - name: Install dependencies
+        run: npm install
 
-test_job:
-  stage: test
-  script:
-    - echo "Running tests..."
-    - npm install
-    - npm test
-  only:
-    - main
+      - name: Build the app
+        run: npm run build
 
-deploy_job:
-  stage: deploy
-  script:
-    - echo "Deploying to production..."
-    - ssh user@production-server 'cd /app && git pull && npm install && pm2 restart app'
-  only:
-    - main
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Deploy to Production
+        run: ssh user@production-server 'cd /app && git pull && npm install && pm2 restart app'

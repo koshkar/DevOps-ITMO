@@ -1,47 +1,107 @@
-stages:
-  - build
-  - test
-  - deploy_staging
-  - deploy_production
+name: CI/CD Pipeline
 
-cache:
-  paths:
-    - node_modules/
+on:
+  push:
+    branches:
+      - main
+      - lab-3
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch: # Позволяет запускать workflow вручную
 
-variables:
+env:
   STAGING_ENV: staging
   PRODUCTION_ENV: production
 
-build_job:
-  stage: build
-  script:
-    - echo "Building the app..."
-    - npm ci
-    - npm run build
-  only:
-    - lab-3
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/lab-3'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-test_job:
-  stage: test
-  script:
-    - echo "Running tests..."
-    - npm ci
-    - npm test
-  only:
-    - main
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
 
-deploy_staging_job:
-  stage: deploy_staging
-  script:
-    - echo "Deploying to staging..."
-    - ssh user@staging-server 'cd /app && git pull && npm ci && pm2 restart app'
-  only:
-    - main
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
-deploy_production_job:
-  stage: deploy_production
-  script:
-    - echo "Deploying to production..."
-    - ssh user@production-server 'cd /app && git pull && npm ci && pm2 restart app'
-  only:
-    - manual
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the app
+        run: npm run build
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+  deploy_staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.5.4
+        with:
+          ssh-private-key: ${{ secrets.STAGING_SSH_KEY }}
+
+      - name: Deploy to Staging Server
+        run: |
+          ssh user@staging-server 'cd /app && git pull && npm ci && pm2 restart app'
+
+  deploy_production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: deploy_staging
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.5.4
+        with:
+          ssh-private-key: ${{ secrets.PRODUCTION_SSH_KEY }}
+
+      - name: Deploy to Production Server
+        run: |
+          ssh user@production-server 'cd /app && git pull && npm ci && pm2 restart app'
