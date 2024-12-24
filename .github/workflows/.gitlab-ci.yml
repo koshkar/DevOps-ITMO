@@ -19,7 +19,7 @@ build_job:
     - npm ci
     - npm run build
   only:
-    - main
+    - lab-3
 
 test_job:
   stage: test
