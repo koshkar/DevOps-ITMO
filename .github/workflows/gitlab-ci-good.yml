@@ -1,54 +1,63 @@
-name: CI/CD for API
+name: Java CI
 
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
-
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v2
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
 
-      - name: Cache Docker images
+      - name: Cache Gradle
         uses: actions/cache@v3
         with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
-            ${{ runner.os }}-buildx
+            ${{ runner.os }}-gradle-
 
-      - name: Cache pip dependencies
+      - name: Build project
+        run: |
+          cd app
+          chmod +x gradlew
+          ./gradlew build
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Cache Gradle
         uses: actions/cache@v3
         with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
-            ${{ runner.os }}-pip-
+            ${{ runner.os }}-gradle-
 
-      - name: Install dependencies for testing
+      - name: Run tests
         run: |
-          pip install -r lab_3/requirements-test.txt
-
-      - name: Build and run containers
-        run: |
-          docker compose -f ./lab_3/docker-compose.yml up -d --build
-
-      - name: Verify running containers
-        run: |
-          docker ps
-
-      - name: Verify API availability
-        run: |
-          sleep 2 
-          curl -f http://localhost:8000/api/hash_code?s=test || exit 1
-
-      - name: Run API tests
-        run: |
-          pytest ./lab_3/tests.py --verbose
+          cd app
+          chmod +x gradlew
+          ./gradlew test
