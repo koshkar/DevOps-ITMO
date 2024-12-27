@@ -39,14 +39,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@v1
+        with:
+          token: ${{ secrets.DOPPLER_TOKEN }}
+
+      - name: Load Secrets into Environment
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+        run: |
+          doppler secrets download --no-file --format env > secrets.env
+          set -o allexport
+          source secrets.env
+          set +o allexport
+
       - name: Deploy to production
         run: |
           echo "Deployment step would be added here."
-          curl -Ls https://cli.doppler.com/install.sh | sudo sh
-          doppler setup --token ${{ secrets.DOPPLER_TOKEN }} --project lab-3 --config dev_personal
-          doppler secrets download --format=env --no-file > /home/runner/work/DevOps-ITMO/DevOps-ITMO/.doppler.env
-          cat /home/runner/work/DevOps-ITMO/DevOps-ITMO/.doppler.env
-          source /home/runner/work/DevOps-ITMO/DevOps-ITMO/.doppler.env
           echo "Secrets loaded successfully."
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
