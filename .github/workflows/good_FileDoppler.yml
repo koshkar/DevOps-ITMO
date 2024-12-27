@@ -1,35 +1,52 @@
-deploy:
-  needs: build
-  runs-on: ubuntu-latest
-  if: github.ref == 'refs/heads/main'
+name: Secrets
 
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
-    - name: Install Doppler CLI
-      run: |
-        curl -Ls https://cli.doppler.com/install.sh | sudo sh
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-    - name: Fetch secrets from Doppler
-      env:
-        DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
-      run: |
-        doppler setup --token $DOPPLER_TOKEN --project lab-3 --config dev_personal
-        doppler secrets download --format=env --output .doppler.env
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Use Doppler secrets
-      env:
-        DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
-      run: |
-        source .doppler.env
-        echo "Using SSH_PRIVATE_KEY from Doppler"
-        mkdir -p ~/.ssh
-        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
+      - name: Set up Node.js (example for Node.js project)
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
 
-        echo "Deploying project to production..."
-        ssh -o StrictHostKeyChecking=no user@your-server.com "echo 'Deployment started'"
-        echo "Database password: $DATABASE_PASSWORD"
-        # Добавьте команды деплоя, например:
-        # scp ./build/* user@your-server.com:/var/www/html/
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build project
+        run: npm run build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to production
+        run: |
+          echo "Deployment step would be added here."
+          curl -Ls https://cli.doppler.com/install.sh | sudo sh
+          doppler setup --token ${{ secrets.DOPPLER_TOKEN }} --project lab-3 --config dev_personal
+          doppler secrets download --format=env --output .doppler.env
+          source .doppler.env
+          echo "Secrets loaded successfully."
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh -o StrictHostKeyChecking=no user@your-server.com "echo 'Deployment started.'"
