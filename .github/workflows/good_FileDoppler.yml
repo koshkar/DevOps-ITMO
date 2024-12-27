@@ -53,11 +53,19 @@ jobs:
           source secrets.env
           set +o allexport
 
-      - name: Deploy to production
+      - name: Use Secrets Securely
         run: |
-          echo "Deployment step would be added here."
-          echo "Secrets loaded successfully."
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh -o StrictHostKeyChecking=no user@your-server.com "echo 'Deployment started.'"
+          echo "Building application with a hidden secret..."
+
+          echo "SECRET_KEY is set, but it won't appear in logs!"
+
+          export DATABASE_URL="postgresql://user:$SECRET_KEY@localhost:5432/mydatabase"
+          echo "Connecting to the database using the secret!"
+
+          if [ -f "./run_database_migrations.sh" ]; then
+            ./run_database_migrations.sh --db-url=$DATABASE_URL
+          else
+            echo "Migration script not found. Skipping migrations."
+          fi
+        env:
+          SECRET_KEY: $SECRET_KEY
