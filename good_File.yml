@@ -1,4 +1,4 @@
-name: Java CI
+name: CI/CD Pipeline
 
 on:
   push:
@@ -10,64 +10,38 @@ on:
 
 jobs:
   build:
+    name: Build and Test
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK
-        uses: actions/setup-java@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          node-version: '16'
 
-      - name: Cache Gradle
-        uses: actions/cache@v3
-        with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: Build project
-        run: |
-          cd app
-          chmod +x gradlew
-          ./gradlew build
-
-  test:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-
-      - name: Cache Gradle
-        uses: actions/cache@v3
-        with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+      - name: Install dependencies
+        run: npm install
 
       - name: Run tests
+        run: npm test
+
+      - name: Lint code
+        run: npm run lint
+
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy application
         run: |
-          cd app
-          chmod +x gradlew
-          ./gradlew test
-
-
-      # - name: Publish code coverage
-      #   uses: paambaati/codeclimate-action@v9.0.0
-      #   env:
-      #     CC_TEST_REPORTER_ID: ${{secrets.CC_TEST_REPORTER_ID}}
-      #     JACOCO_SOURCE_PATH: src/main/java
-      #   with:
-      #     coverageCommand: make report
-      #     coverageLocations: ${{github.workspace}}/build/reports/jacoco/test/jacocoTestReport.xml:jacoco
+          echo "Deploying application..."
+          # команды для деплоя
