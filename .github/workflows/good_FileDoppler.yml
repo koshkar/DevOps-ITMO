@@ -44,7 +44,8 @@ jobs:
           echo "Deployment step would be added here."
           curl -Ls https://cli.doppler.com/install.sh | sudo sh
           doppler setup --token ${{ secrets.DOPPLER_TOKEN }} --project lab-3 --config dev_personal
-          doppler secrets download --format=env /home/runner/work/DevOps-ITMO/DevOps-ITMO/.doppler.env
+          doppler secrets download --format=env --no-file > /home/runner/work/DevOps-ITMO/DevOps-ITMO/.doppler.env
+          cat /home/runner/work/DevOps-ITMO/DevOps-ITMO/.doppler.env
           source /home/runner/work/DevOps-ITMO/DevOps-ITMO/.doppler.env
           echo "Secrets loaded successfully."
           mkdir -p ~/.ssh
