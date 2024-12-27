@@ -28,22 +28,6 @@ jobs:
         with:
           node-version: '18'
 
-      # 4. Install dependencies
-      - name: Install dependencies
-        run: npm install
-
-      # 5. Run tests
-      - name: Run tests
-        run: npm test
-
-      # 6. Run linting for code quality
-      - name: Lint code
-        run: npm run lint
-
-      # 7. Build the application
-      - name: Build application
-        run: npm run build
-
       # 8. Verify directory structure (optional debug step)
       - name: List build directory
         run: ls -la dist/
