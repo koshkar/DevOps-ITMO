@@ -8,39 +8,47 @@ on:
 
 jobs:
   build:
+    name: Build and Secure Pipeline
     runs-on: ubuntu-22.04
 
     steps:
+      # 1. Checkout the repository code
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      # - name: Install Doppler CLI
-      #   uses: dopplerhq/cli-action@v1
-      #   with:
-      #     token: ${{ secrets.DOPPLER_TOKEN }}
+      # 2. Authenticate with Doppler
+      - name: Authenticate with Doppler
+        uses: dopplerhq/cli-action@v1
+        with:
+          doppler-token: ${{ secrets.DOPPLER_TOKEN }}
 
-      # - name: Load Secrets into Environment
-      #   env:
-      #     DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
-      #   run: |
-      #     doppler secrets download --no-file --format env > secrets.env
-      #     set -o allexport
-      #     source secrets.env
-      #     set +o allexport
+      # 3. Set up Node.js environment
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
 
-      # - name: Use Secrets Securely
-      #   run: |
-      #     echo "Building application with a hidden secret..."
+      # 4. Install dependencies
+      - name: Install dependencies
+        run: npm install
 
-      #     echo "SECRET_KEY is set, but it won't appear in logs!"
+      # 5. Run tests
+      - name: Run tests
+        run: npm test
 
-      #     export DATABASE_URL="postgresql://user:$SECRET_KEY@localhost:5432/mydatabase"
-      #     echo "Connecting to the database using the secret!"
+      # 6. Run linting for code quality
+      - name: Lint code
+        run: npm run lint
 
-      #     if [ -f "./run_database_migrations.sh" ]; then
-      #       ./run_database_migrations.sh --db-url=$DATABASE_URL
-      #     else
-      #       echo "Migration script not found. Skipping migrations."
-      #     fi
-      #   env:
-      #     SECRET_KEY: $SECRET_KEY
+      # 7. Build the application
+      - name: Build application
+        run: npm run build
+
+      # 8. Verify directory structure (optional debug step)
+      - name: List build directory
+        run: ls -la dist/
+
+      # 9. Deploy application (only for main branch)
+      - name: Deploy to Production
+        if: github.ref == 'refs/heads/main'
+        run: echo "Deploying application to production..."
