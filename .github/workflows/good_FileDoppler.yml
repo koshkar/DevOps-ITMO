@@ -1,4 +1,4 @@
-name: Secrets
+name: CI/CD Pipeline
 
 on:
   push:
@@ -44,9 +44,10 @@ jobs:
           echo "Deployment step would be added here."
           curl -Ls https://cli.doppler.com/install.sh | sudo sh
           doppler setup --token ${{ secrets.DOPPLER_TOKEN }} --project lab-3 --config dev_personal
-          doppler secrets download --format=env --output .doppler.env
-          source .doppler.env
+          doppler secrets download --format=env /home/runner/work/DevOps-ITMO/DevOps-ITMO/.doppler.env
+          source /home/runner/work/DevOps-ITMO/DevOps-ITMO/.doppler.env
           echo "Secrets loaded successfully."
+          mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh -o StrictHostKeyChecking=no user@your-server.com "echo 'Deployment started.'"
