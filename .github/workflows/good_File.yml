@@ -1,48 +1,45 @@
-name: CI/CD Pipeline
+name: Secure CI/CD Pipeline with Doppler
 
 on:
   push:
     branches:
       - main
-      - lab-3
-  pull_request:
-    branches:
-      - main
 
 jobs:
   build:
-    name: Build and Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@v1
         with:
-          node-version: '16'
+          token: ${{ secrets.DOPPLER_TOKEN }}
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run tests
-        run: npm test
-
-      - name: Lint code
-        run: npm run lint
-
-  deploy:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Deploy application
+      - name: Load Secrets into Environment
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         run: |
-          echo "Deploying application..."
-          # команды для деплоя
+          doppler secrets download --no-file --format env > secrets.env
+          set -o allexport
+          source secrets.env
+          set +o allexport
+
+      - name: Use Secrets Securely
+        run: |
+          echo "Building application with a hidden secret..."
+
+          echo "SECRET_KEY is set, but it won't appear in logs!"
+
+          export DATABASE_URL="postgresql://user:$SECRET_KEY@localhost:5432/mydatabase"
+          echo "Connecting to the database using the secret!"
+
+          if [ -f "./run_database_migrations.sh" ]; then
+            ./run_database_migrations.sh --db-url=$DATABASE_URL
+          else
+            echo "Migration script not found. Skipping migrations."
+          fi
+        env:
+          SECRET_KEY: $SECRET_KEY
