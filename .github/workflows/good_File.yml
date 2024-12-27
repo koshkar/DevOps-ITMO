@@ -12,35 +12,35 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+      #   uses: actions/checkout@v2
 
-      - name: Install Doppler CLI
-        uses: dopplerhq/cli-action@v1
-        with:
-          token: ${{ secrets.DOPPLER_TOKEN }}
+      # - name: Install Doppler CLI
+      #   uses: dopplerhq/cli-action@v1
+      #   with:
+      #     token: ${{ secrets.DOPPLER_TOKEN }}
 
-      - name: Load Secrets into Environment
-        env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
-        run: |
-          doppler secrets download --no-file --format env > secrets.env
-          set -o allexport
-          source secrets.env
-          set +o allexport
+      # - name: Load Secrets into Environment
+      #   env:
+      #     DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+      #   run: |
+      #     doppler secrets download --no-file --format env > secrets.env
+      #     set -o allexport
+      #     source secrets.env
+      #     set +o allexport
 
-      - name: Use Secrets Securely
-        run: |
-          echo "Building application with a hidden secret..."
+      # - name: Use Secrets Securely
+      #   run: |
+      #     echo "Building application with a hidden secret..."
 
-          echo "SECRET_KEY is set, but it won't appear in logs!"
+      #     echo "SECRET_KEY is set, but it won't appear in logs!"
 
-          export DATABASE_URL="postgresql://user:$SECRET_KEY@localhost:5432/mydatabase"
-          echo "Connecting to the database using the secret!"
+      #     export DATABASE_URL="postgresql://user:$SECRET_KEY@localhost:5432/mydatabase"
+      #     echo "Connecting to the database using the secret!"
 
-          if [ -f "./run_database_migrations.sh" ]; then
-            ./run_database_migrations.sh --db-url=$DATABASE_URL
-          else
-            echo "Migration script not found. Skipping migrations."
-          fi
-        env:
-          SECRET_KEY: $SECRET_KEY
+      #     if [ -f "./run_database_migrations.sh" ]; then
+      #       ./run_database_migrations.sh --db-url=$DATABASE_URL
+      #     else
+      #       echo "Migration script not found. Skipping migrations."
+      #     fi
+      #   env:
+      #     SECRET_KEY: $SECRET_KEY
