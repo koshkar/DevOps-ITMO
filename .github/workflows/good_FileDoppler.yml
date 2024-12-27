@@ -1,0 +1,35 @@
+deploy:
+  needs: build
+  runs-on: ubuntu-latest
+  if: github.ref == 'refs/heads/main'
+
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Install Doppler CLI
+      run: |
+        curl -Ls https://cli.doppler.com/install.sh | sudo sh
+
+    - name: Fetch secrets from Doppler
+      env:
+        DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+      run: |
+        doppler setup --token $DOPPLER_TOKEN --project lab-3 --config dev_personal
+        doppler secrets download --format=env --output .doppler.env
+
+    - name: Use Doppler secrets
+      env:
+        DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+      run: |
+        source .doppler.env
+        echo "Using SSH_PRIVATE_KEY from Doppler"
+        mkdir -p ~/.ssh
+        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+
+        echo "Deploying project to production..."
+        ssh -o StrictHostKeyChecking=no user@your-server.com "echo 'Deployment started'"
+        echo "Database password: $DATABASE_PASSWORD"
+        # Добавьте команды деплоя, например:
+        # scp ./build/* user@your-server.com:/var/www/html/
